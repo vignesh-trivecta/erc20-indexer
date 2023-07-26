@@ -11,22 +11,33 @@ import {
 } from '@chakra-ui/react';
 import { Alchemy, Network, Utils } from 'alchemy-sdk';
 import { useState } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Card, CardHeader, CardBody, CardFooter } from '@chakra-ui/react'
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react'
 
 function App() {
   const [userAddress, setUserAddress] = useState('');
   const [results, setResults] = useState([]);
+  const [nfts, setNfts]= useState([]);
   const [hasQueried, setHasQueried] = useState(false);
   const [tokenDataObjects, setTokenDataObjects] = useState([]);
 
   async function getTokenBalance() {
     const config = {
-      apiKey: '<-- COPY-PASTE YOUR ALCHEMY API KEY HERE -->',
+      apiKey: 's7ypqu8C6n0h2UrXk-o2ZHbFMFJoGq9j',
       network: Network.ETH_MAINNET,
     };
 
+    // NFT
+    const options = {method: 'GET', headers: {accept: 'application/json'}};
+    fetch(`https://eth-mainnet.g.alchemy.com/nft/v3/s7ypqu8C6n0h2UrXk-o2ZHbFMFJoGq9j/getNFTsForOwner?owner=${userAddress}`, options)
+      .then(response => response.json())
+      .then(response => setNfts(response))
+      .catch(err => console.error(err));
+
+    // ERC-20 tokens
     const alchemy = new Alchemy(config);
     const data = await alchemy.core.getTokenBalances(userAddress);
-
     setResults(data);
 
     const tokenDataPromises = [];
@@ -42,7 +53,7 @@ function App() {
     setHasQueried(true);
   }
   return (
-    <Box w="100vw">
+    <Box>
       <Center>
         <Flex
           alignItems={'center'}
@@ -53,7 +64,7 @@ function App() {
             ERC-20 Token Indexer
           </Heading>
           <Text>
-            Plug in an address and this website will return all of its ERC-20
+            Connect your wallet and this website will return all of its ERC-20
             token balances!
           </Text>
         </Flex>
@@ -70,7 +81,6 @@ function App() {
         <Input
           onChange={(e) => setUserAddress(e.target.value)}
           color="black"
-          w="600px"
           textAlign="center"
           p={4}
           bgColor="white"
@@ -83,31 +93,54 @@ function App() {
         <Heading my={36}>ERC-20 token balances:</Heading>
 
         {hasQueried ? (
-          <SimpleGrid w={'90vw'} columns={4} spacing={24}>
-            {results.tokenBalances.map((e, i) => {
-              return (
-                <Flex
-                  flexDir={'column'}
-                  color="white"
-                  bg="blue"
-                  w={'20vw'}
-                  key={e.id}
-                >
-                  <Box>
-                    <b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;
-                  </Box>
-                  <Box>
-                    <b>Balance:</b>&nbsp;
-                    {Utils.formatUnits(
-                      e.tokenBalance,
-                      tokenDataObjects[i].decimals
-                    )}
-                  </Box>
-                  <Image src={tokenDataObjects[i].logo} />
+          <Tabs isFitted variant='enclosed'>
+            <TabList mb='1em' justifyContent={'center'}>
+              <Tab>ERC-20 a.k.a TOKENS</Tab>
+              <Tab>ERC-721 a.k.a NFT'S</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel>
+                <Flex flexDirection={{sm: 'column', md:'row'}} justify={'center'}  flexWrap="wrap" spacing={24} rounded={'md'}>
+                  {results.tokenBalances.map((e, i) => {
+                    return (
+                        <Card width={'300px'}  padding={'20px'} borderRadius={'10px'} margin={'8px'}
+                        background="rgba(255, 255, 255, 0.25)"
+                        boxShadow="0 8px 32px 0 rgba(31, 38, 135, 0.37)"
+                        backdropFilter="blur(4px)"
+                        WebkitBackdropFilter="blur(4px)"
+                        border="1px solid rgba(255, 255, 255, 0.18)"
+                        >
+                          <CardBody>
+                            <Text><b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;</Text>
+                            <Text><b>Balance:</b>&nbsp;{Utils.formatUnits(e.tokenBalance,tokenDataObjects[i].decimals)}</Text>
+                          </CardBody>
+                        </Card>
+                    );
+                  })}
                 </Flex>
-              );
-            })}
-          </SimpleGrid>
+              </TabPanel>
+              <TabPanel>
+              <Flex flexDirection={{sm: 'column', md:'row'}} justify={'center'}  flexWrap="wrap" spacing={24} rounded={'md'}>
+                  {results.tokenBalances.map((e, i) => {
+                    return (
+                        <Card width={'300px'}  padding={'20px'} borderRadius={'10px'} margin={'8px'}
+                        background="rgba(255, 255, 255, 0.25)"
+                        boxShadow="0 8px 32px 0 rgba(31, 38, 135, 0.37)"
+                        backdropFilter="blur(4px)"
+                        WebkitBackdropFilter="blur(4px)"
+                        border="1px solid rgba(255, 255, 255, 0.18)"
+                        >
+                          <CardBody>
+                            <Text><b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;</Text>
+                            <Text><b>Balance:</b>&nbsp;{Utils.formatUnits(e.tokenBalance,tokenDataObjects[i].decimals)}</Text>
+                          </CardBody>
+                        </Card>
+                    );
+                  })}
+                </Flex>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         ) : (
           'Please make a query! This may take a few seconds...'
         )}
