@@ -29,11 +29,10 @@ function App() {
     };
 
     // NFT
-    const options = {method: 'GET', headers: {accept: 'application/json'}};
-    fetch(`https://eth-mainnet.g.alchemy.com/nft/v3/s7ypqu8C6n0h2UrXk-o2ZHbFMFJoGq9j/getNFTsForOwner?owner=${userAddress}`, options)
-      .then(response => response.json())
-      .then(response => setNfts(response))
-      .catch(err => console.error(err));
+        const nftList = await alchemyWeb3.getNftsForOwner(ownerAddress);
+        // Filter the NFTs to get only the verified or not scam genuine NFTs
+        const verifiedNFTs = nftList.filter((nft) => !nft.spamInfo.isScam);
+        setNfts(verifiedNFTs)
 
     // ERC-20 tokens
     const alchemy = new Alchemy(config);
@@ -121,7 +120,7 @@ function App() {
               </TabPanel>
               <TabPanel>
               <Flex flexDirection={{sm: 'column', md:'row'}} justify={'center'}  flexWrap="wrap" spacing={24} rounded={'md'}>
-                  {results.tokenBalances.map((e, i) => {
+                  {nfts.ownedNfts.map((e, i) => {
                     return (
                         <Card width={'300px'}  padding={'20px'} borderRadius={'10px'} margin={'8px'}
                         background="rgba(255, 255, 255, 0.25)"
@@ -131,16 +130,18 @@ function App() {
                         border="1px solid rgba(255, 255, 255, 0.18)"
                         >
                           <CardBody>
-                            <Text><b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;</Text>
-                            <Text><b>Balance:</b>&nbsp;{Utils.formatUnits(e.tokenBalance,tokenDataObjects[i].decimals)}</Text>
+                            <Text><b>Symbol:</b>&nbsp;{tokenDataObjects[i].symbol}&nbsp;</Text>
+                            <Text><b>Name:</b>&nbsp;{tokenDataObjects[i].name}</Text>
                           </CardBody>
                         </Card>
                     );
                   })}
                 </Flex>
               </TabPanel>
+              {console.log(nfts)}
             </TabPanels>
           </Tabs>
+
         ) : (
           'Please make a query! This may take a few seconds...'
         )}
